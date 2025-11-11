@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { connectDB } from "./db/db.js";
 import express from "express";
+import morgan from "morgan";
 import carRoutes from "./routes/car.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
 import employeeRoutes from "./routes/emplotee.routes.js";
@@ -12,6 +13,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(morgan('combined'));
 app.use(express.json());
 
 app.use('/api/cars', carRoutes);
