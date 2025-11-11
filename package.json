@@ -1,0 +1,26 @@
+{
+  "name": "basic-api-for-testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cotbert2/node-basic-api-for-testing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Cotbert2/node-basic-api-for-testing/issues"
+  },
+  "homepage": "https://github.com/Cotbert2/node-basic-api-for-testing#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
