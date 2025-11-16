@@ -21,6 +21,22 @@ export const getCustomerById = async (req, res) => {
 
 export const createCustomer = async (req, res) => {
   try {
+    // validacion para que el nombre no contenga numeros
+    if (/\d/.test(req.body.name)) {
+      return res.status(400).json({ message: 'The name cannot contain numbers' });
+    }
+
+    // validacion para numero de celular sin letras
+    if (/[a-zA-Z]/.test(req.body.phone_number)) {
+      return res.status(400).json({ message: 'The phone number cannot contain letters' });
+    }
+
+    // validacion para formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(req.body.email)) {
+      return res.status(400).json({ message: 'Invalid email format or empty email' });
+    }
+    
     const customer = new Customer(req.body);
     const saved = await customer.save();
     res.status(201).json(saved);
@@ -31,6 +47,16 @@ export const createCustomer = async (req, res) => {
 
 export const updateCustomer = async (req, res) => {
   try {
+    // validacion para que el nombre no contenga numeros
+    if (/\d/.test(req.body.name)) {
+      return res.status(400).json({ message: 'The name cannot contain numbers' });
+    }
+
+    // validacion para numero de celular sin letras
+    if (/[a-zA-Z]/.test(req.body.phone_number)) {
+      return res.status(400).json({ message: 'The phone number cannot contain letters' });
+    }
+
     const updated = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
   } catch (err) {
@@ -40,9 +66,10 @@ export const updateCustomer = async (req, res) => {
 
 export const deleteCustomer = async (req, res) => {
   try {
-    await Customer.findByIdAndDelete(req.params.id);
+    const customer = await Customer.findByIdAndDelete(req.params.id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
