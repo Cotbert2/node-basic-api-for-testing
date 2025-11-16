@@ -1,12 +1,12 @@
 import dotenv from 'dotenv';
-import { connectDB } from "./db/db.js";
-import express from "express";
-import morgan from "morgan";
-import carRoutes from "./routes/car.routes.js";
-import customerRoutes from "./routes/customer.routes.js";
-import employeeRoutes from "./routes/emplotee.routes.js";
-import locationRoutes from "./routes/location.routes.js";
-import rentalRoutes from "./routes/rental.routes.js";
+import { connectDB } from './db/db.js';
+import express from 'express';
+import morgan from 'morgan';
+import carRoutes from './routes/car.routes.js';
+import customerRoutes from './routes/customer.routes.js';
+import employeeRoutes from './routes/emplotee.routes.js';
+import locationRoutes from './routes/location.routes.js';
+import rentalRoutes from './routes/rental.routes.js';
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ app.use('/api/rentals', rentalRoutes);
 connectDB();
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    
 });
 
 export default app;
