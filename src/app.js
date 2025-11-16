@@ -22,10 +22,12 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rentals', rentalRoutes);
 
-connectDB();
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
 
 export default app;
