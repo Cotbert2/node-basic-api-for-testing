@@ -22,10 +22,16 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rentals', rentalRoutes);
 
-connectDB();
-
-app.listen(PORT, () => {
+// Solo conectar a la BD si NO estamos en entorno de test
+if (process.env.NODE_ENV !== 'test') {
+    connectDB();
     
-});
+    app.listen(PORT, () => {
+        console.log(`Servidor corriendo en puerto ${PORT}`);
+    });
+}
 
-export default app;
+module.exports = app;
+
+
+
