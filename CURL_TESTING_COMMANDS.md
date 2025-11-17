@@ -621,6 +621,53 @@ echo "Testing complete! Use these IDs for manual testing."
 4. **In-Memory Storage**: Data is lost when server restarts
 5. **Same Business Logic**: All original validations and business rules maintained
 
+## Important: No Referential Integrity
+
+⚠️ **Critical Behavior**: This simulated storage system has NO referential integrity checks:
+
+### Foreign Keys - UUID Validation Only
+- **Employee.location_id**: Only validates UUID format, doesn't verify Location exists
+- **Car.rental_location_id**: Only validates UUID format, doesn't verify Location exists  
+- **Rental.customer_id**: Only validates UUID format, doesn't verify Customer exists
+- **Rental.car_id**: Only validates UUID format, doesn't verify Car exists
+
+### No Cascade Deletion
+- Deleting a Location **DOES NOT** delete related Employees or Cars
+- Deleting a Customer **DOES NOT** delete related Rentals
+- Deleting a Car **DOES NOT** delete related Rentals
+- Orphaned foreign keys will remain and display as the UUID instead of populated data
+
+### Test Examples of This Behavior
+
+```bash
+# 1. Create a location
+LOCATION_ID=$(curl -s -X POST http://localhost:3000/api/locations \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test Location"}' | jq -r '.id')
+
+# 2. Create an employee with that location
+curl -X POST http://localhost:3000/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test Employee", "email": "test@example.com", "location_id": "'$LOCATION_ID'"}'
+
+# 3. Delete the location (this will succeed)
+curl -X DELETE http://localhost:3000/api/locations/$LOCATION_ID
+
+# 4. Get employees - the employee still exists but location_id shows as UUID instead of populated data
+curl -X GET http://localhost:3000/api/employees
+
+# 5. Create new entities with non-existent but valid UUIDs (this will succeed)
+curl -X POST http://localhost:3000/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Orphaned Employee", 
+    "email": "orphan@example.com",
+    "location_id": "550e8400-e29b-41d4-a716-446655440000"
+  }'
+```
+
+This design choice simplifies the implementation but requires careful consideration in production use.
+
 ## Expected Error Codes
 
 - **400**: Validation errors, invalid UUID format, duplicate unique fields

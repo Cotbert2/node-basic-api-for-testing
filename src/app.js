@@ -21,10 +21,5 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rentals', rentalRoutes);
 
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT} with simulated storage`);
-    });
-}
 
 export default app;
