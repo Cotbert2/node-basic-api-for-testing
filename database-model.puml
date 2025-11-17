@@ -1,0 +1,68 @@
+@startuml Database Model - Car Rental System
+
+!define TABLE(name) class name << (T,#FFAAAA) >>
+!define PK(x) <u>x</u>
+!define FK(x) <color:red>x</color>
+
+' Definición de entidades
+TABLE(Location) {
+  PK(_id) : ObjectId
+  --
+  name : String [required]
+  address : String
+  city : String
+  state : String
+  zip_code : String
+}
+
+TABLE(Customer) {
+  PK(_id) : ObjectId
+  --
+  name : String [required]
+  email : String [required, unique]
+  phone_number : String
+  driver_license_number : String
+}
+
+TABLE(Employee) {
+  PK(_id) : ObjectId
+  --
+  name : String [required]
+  email : String [unique]
+  phone_number : String
+  FK(location_id) : ObjectId [ref: Location]
+}
+
+TABLE(Car) {
+  PK(_id) : ObjectId
+  --
+  make : String [required]
+  model : String [required]
+  year : Number [required, 1886-current+1]
+  license_plate : String [required, unique]
+  FK(rental_location_id) : ObjectId [ref: Location]
+}
+
+TABLE(Rental) {
+  PK(_id) : ObjectId
+  --
+  FK(customer_id) : ObjectId [required, ref: Customer]
+  FK(car_id) : ObjectId [required, ref: Car]
+  rental_date : Date [required]
+  return_date : Date
+  total_cost : Number
+}
+
+' Definición de relaciones
+Location ||--o{ Employee : "works at"
+Location ||--o{ Car : "located at"
+Customer ||--o{ Rental : "makes"
+Car ||--o{ Rental : "is rented"
+
+' Notas adicionales
+note right of Car : license_plate is unique\nyear validation: 1886 to current+1
+note right of Customer : email is unique
+note right of Employee : email is unique
+note right of Location : Main location for\nemployees and cars
+
+@enduml
