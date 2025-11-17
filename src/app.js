@@ -22,20 +22,6 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rentals', rentalRoutes);
 
-<<<<<<< HEAD
-// Solo conectar a la BD si NO estamos en entorno de test
-if (process.env.NODE_ENV !== 'test') {
-    connectDB();
-    
-    app.listen(PORT, () => {
-        console.log(`Servidor corriendo en puerto ${PORT}`);
-    });
-}
-
-module.exports = app;
-
-
-=======
 if (process.env.NODE_ENV !== 'test') {
     connectDB();
 
@@ -43,5 +29,4 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`Server is running on port ${PORT}`);
     });
 }
->>>>>>> 90996e72fb16967e8b72ca9b1af686f603612a5f
 

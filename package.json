@@ -8,20 +8,8 @@
     "test": "test"
   },
   "scripts": {
-<<<<<<< HEAD
-    "start": "node src/app.js",
-    "dev": "node --watch src/app.js",
-    "test": "jest",
-    "test:rental": "jest test/rental.test.js",
-    "test:employee": "jest test/employee.test.js",
-    "test:location": "jest test/location.test.js",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:all": "jest test/",
-=======
     "start": "node ./src/app.js",
     "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles",
->>>>>>> 90996e72fb16967e8b72ca9b1af686f603612a5f
     "lint": "eslint ."
   },
   "repository": {
@@ -39,20 +27,11 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "mongoose": "^8.19.3",
-<<<<<<< HEAD
-    "morgan": "^1.10.1"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.28.5",
-    "@babel/preset-env": "^7.28.5",
-    "babel-jest": "^30.2.0",
-=======
     "morgan": "^1.10.1",
     "supertest": "^7.1.4"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
->>>>>>> 90996e72fb16967e8b72ca9b1af686f603612a5f
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
     "mongodb-memory-server": "^10.3.0"
