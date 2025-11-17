@@ -1,9 +1,9 @@
-import Customer from '../models/customer.model.js';
+import { storage, generateUUID, isValidUUID, findById, findIndexById } from '../storage/data.js';
+import { validateCustomer } from '../utils/validation.js';
 
 export const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
-    res.json(customers);
+    res.json(storage.customers);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -11,7 +11,11 @@ export const getCustomers = async (req, res) => {
 
 export const getCustomerById = async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id);
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
+    }
+    
+    const customer = findById('customers', req.params.id);
     if (!customer) return res.status(404).json({ message: 'Customer not found' });
     res.json(customer);
   } catch (err) {
@@ -21,25 +25,24 @@ export const getCustomerById = async (req, res) => {
 
 export const createCustomer = async (req, res) => {
   try {
-    // validacion para que el nombre no contenga numeros
-    if (/\d/.test(req.body.name)) {
-      return res.status(400).json({ message: 'The name cannot contain numbers' });
-    }
-
-    // validacion para numero de celular sin letras
-    if (/[a-zA-Z]/.test(req.body.phone_number)) {
-      return res.status(400).json({ message: 'The phone number cannot contain letters' });
-    }
-
-    // validacion para formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(req.body.email)) {
-      return res.status(400).json({ message: 'Invalid email format or empty email' });
+    const validationErrors = validateCustomer(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ message: validationErrors.join(', ') });
     }
     
-    const customer = new Customer(req.body);
-    const saved = await customer.save();
-    res.status(201).json(saved);
+    // Check unique email
+    const existingCustomer = storage.customers.find(customer => customer.email === req.body.email);
+    if (existingCustomer) {
+      return res.status(400).json({ message: 'Email must be unique' });
+    }
+    
+    const customer = {
+      id: generateUUID(),
+      ...req.body
+    };
+    
+    storage.customers.push(customer);
+    res.status(201).json(customer);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -47,18 +50,30 @@ export const createCustomer = async (req, res) => {
 
 export const updateCustomer = async (req, res) => {
   try {
-    // validacion para que el nombre no contenga numeros
-    if (/\d/.test(req.body.name)) {
-      return res.status(400).json({ message: 'The name cannot contain numbers' });
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
     }
-
-    // validacion para numero de celular sin letras
-    if (/[a-zA-Z]/.test(req.body.phone_number)) {
-      return res.status(400).json({ message: 'The phone number cannot contain letters' });
+    
+    const validationErrors = validateCustomer(req.body, true);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ message: validationErrors.join(', ') });
     }
-
-    const updated = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updated);
+    
+    const index = findIndexById('customers', req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    
+    // Check unique email if being updated
+    if (req.body.email) {
+      const existingCustomer = storage.customers.find(customer => customer.email === req.body.email && customer.id !== req.params.id);
+      if (existingCustomer) {
+        return res.status(400).json({ message: 'Email must be unique' });
+      }
+    }
+    
+    storage.customers[index] = { ...storage.customers[index], ...req.body };
+    res.json(storage.customers[index]);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -66,8 +81,16 @@ export const updateCustomer = async (req, res) => {
 
 export const deleteCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
+    }
+    
+    const index = findIndexById('customers', req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    
+    storage.customers.splice(index, 1);
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
     res.status(400).json({ message: err.message });

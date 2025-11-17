@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import { connectDB } from './db/db.js';
 import express from 'express';
 import morgan from 'morgan';
 import carRoutes from './routes/car.routes.js';
@@ -23,10 +22,9 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/rentals', rentalRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
-    connectDB();
-
     app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        console.log(`Server is running on port ${PORT} with simulated storage`);
     });
 }
 
+export default app;

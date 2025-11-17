@@ -1,11 +1,21 @@
-import Rental from '../models/rental.model.js';
+import { storage, generateUUID, isValidUUID, findById, findIndexById } from '../storage/data.js';
+import { validateRental } from '../utils/validation.js';
 
 export const getRentals = async (req, res) => {
   try {
-    const rentals = await Rental.find()
-      .populate('customer_id')
-      .populate('car_id');
-    res.json(rentals);
+    // Populate customer and car data for each rental
+    const rentalsWithData = storage.rentals.map(rental => {
+      const customer = findById('customers', rental.customer_id);
+      const car = findById('cars', rental.car_id);
+      
+      return {
+        ...rental,
+        customer_id: customer || rental.customer_id,
+        car_id: car || rental.car_id
+      };
+    });
+    
+    res.json(rentalsWithData);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -13,11 +23,24 @@ export const getRentals = async (req, res) => {
 
 export const getRentalById = async (req, res) => {
   try {
-    const rental = await Rental.findById(req.params.id)
-      .populate('customer_id')
-      .populate('car_id');
-    if (!rental) return res.status(404).json({ message: 'Rent not found' });
-    res.json(rental);
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
+    }
+    
+    const rental = findById('rentals', req.params.id);
+    if (!rental) return res.status(404).json({ message: 'Rental not found' });
+    
+    // Populate customer and car data
+    const customer = findById('customers', rental.customer_id);
+    const car = findById('cars', rental.car_id);
+    
+    const populatedRental = {
+      ...rental,
+      customer_id: customer || rental.customer_id,
+      car_id: car || rental.car_id
+    };
+    
+    res.json(populatedRental);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -25,33 +48,35 @@ export const getRentalById = async (req, res) => {
 
 export const createRental = async (req, res) => {
   try {
+    const validationErrors = validateRental(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ message: validationErrors.join(', ') });
+    }
+    
     const { car_id, rental_date, return_date } = req.body;
     
     // Check for date conflicts with existing rentals for the same car
-    const conflictingRental = await Rental.findOne({
-      car_id,
-      $or: [
-        // New rental starts during existing rental
-        {
-          rental_date: { $lte: new Date(rental_date) },
-          return_date: { $gte: new Date(rental_date) }
-        },
-        // New rental ends during existing rental
-        {
-          rental_date: { $lte: new Date(return_date) },
-          return_date: { $gte: new Date(return_date) }
-        },
-        // New rental encompasses existing rental
-        {
-          rental_date: { $gte: new Date(rental_date) },
-          return_date: { $lte: new Date(return_date) }
-        },
-        // Existing rental without return_date (ongoing rental)
-        {
-          rental_date: { $lte: new Date(rental_date) },
-          return_date: null
-        }
-      ]
+    const conflictingRental = storage.rentals.find(rental => {
+      if (rental.car_id !== car_id) return false;
+      
+      const rentalStart = new Date(rental_date);
+      const rentalEnd = return_date ? new Date(return_date) : null;
+      const existingStart = new Date(rental.rental_date);
+      const existingEnd = rental.return_date ? new Date(rental.return_date) : null;
+      
+      // Check for overlaps
+      if (!existingEnd) {
+        // Existing rental is ongoing (no return date)
+        return existingStart <= rentalStart;
+      }
+      
+      if (!rentalEnd) {
+        // New rental is ongoing
+        return rentalStart <= existingEnd;
+      }
+      
+      // Both rentals have end dates - check for any overlap
+      return (rentalStart <= existingEnd && rentalEnd >= existingStart);
     });
 
     if (conflictingRental) {
@@ -60,9 +85,15 @@ export const createRental = async (req, res) => {
       });
     }
 
-    const rental = new Rental(req.body);
-    const saved = await rental.save();
-    res.status(201).json(saved);
+    const rental = {
+      id: generateUUID(),
+      ...req.body,
+      rental_date: new Date(req.body.rental_date),
+      return_date: req.body.return_date ? new Date(req.body.return_date) : null
+    };
+    
+    storage.rentals.push(rental);
+    res.status(201).json(rental);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -70,41 +101,51 @@ export const createRental = async (req, res) => {
 
 export const updateRental = async (req, res) => {
   try {
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
+    }
+    
+    const validationErrors = validateRental(req.body, true);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ message: validationErrors.join(', ') });
+    }
+    
+    const index = findIndexById('rentals', req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ message: 'Rental not found' });
+    }
+    
     const { car_id, rental_date, return_date } = req.body;
     const rentalId = req.params.id;
     
     // If car_id, rental_date, or return_date are being updated, check for conflicts
     if (car_id || rental_date || return_date) {
-      const currentRental = await Rental.findById(rentalId);
+      const currentRental = storage.rentals[index];
       const checkCarId = car_id || currentRental.car_id;
       const checkRentalDate = rental_date || currentRental.rental_date;
-      const checkReturnDate = return_date || currentRental.return_date;
+      const checkReturnDate = return_date !== undefined ? return_date : currentRental.return_date;
       
-      const conflictingRental = await Rental.findOne({
-        _id: { $ne: rentalId }, // Exclude current rental from check
-        car_id: checkCarId,
-        $or: [
-          // Updated rental starts during existing rental
-          {
-            rental_date: { $lte: new Date(checkRentalDate) },
-            return_date: { $gte: new Date(checkRentalDate) }
-          },
-          // Updated rental ends during existing rental
-          {
-            rental_date: { $lte: new Date(checkReturnDate) },
-            return_date: { $gte: new Date(checkReturnDate) }
-          },
-          // Updated rental encompasses existing rental
-          {
-            rental_date: { $gte: new Date(checkRentalDate) },
-            return_date: { $lte: new Date(checkReturnDate) }
-          },
-          // Existing rental without return_date (ongoing rental)
-          {
-            rental_date: { $lte: new Date(checkRentalDate) },
-            return_date: null
-          }
-        ]
+      const conflictingRental = storage.rentals.find(rental => {
+        if (rental.id === rentalId || rental.car_id !== checkCarId) return false;
+        
+        const rentalStart = new Date(checkRentalDate);
+        const rentalEnd = checkReturnDate ? new Date(checkReturnDate) : null;
+        const existingStart = new Date(rental.rental_date);
+        const existingEnd = rental.return_date ? new Date(rental.return_date) : null;
+        
+        // Check for overlaps
+        if (!existingEnd) {
+          // Existing rental is ongoing (no return date)
+          return existingStart <= rentalStart;
+        }
+        
+        if (!rentalEnd) {
+          // Updated rental is ongoing
+          return rentalStart <= existingEnd;
+        }
+        
+        // Both rentals have end dates - check for any overlap
+        return (rentalStart <= existingEnd && rentalEnd >= existingStart);
       });
 
       if (conflictingRental) {
@@ -114,8 +155,17 @@ export const updateRental = async (req, res) => {
       }
     }
 
-    const updated = await Rental.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updated);
+    // Update the rental with proper date conversion
+    const updatedData = { ...req.body };
+    if (updatedData.rental_date) {
+      updatedData.rental_date = new Date(updatedData.rental_date);
+    }
+    if (updatedData.return_date !== undefined) {
+      updatedData.return_date = updatedData.return_date ? new Date(updatedData.return_date) : null;
+    }
+    
+    storage.rentals[index] = { ...storage.rentals[index], ...updatedData };
+    res.json(storage.rentals[index]);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -123,8 +173,17 @@ export const updateRental = async (req, res) => {
 
 export const deleteRental = async (req, res) => {
   try {
-    await Rental.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Rent deleted successfully' });
+    if (!isValidUUID(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
+    }
+    
+    const index = findIndexById('rentals', req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ message: 'Rental not found' });
+    }
+    
+    storage.rentals.splice(index, 1);
+    res.json({ message: 'Rental deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
