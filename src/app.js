@@ -10,7 +10,6 @@ import rentalRoutes from './routes/rental.routes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(morgan('combined'));
 app.use(express.json());

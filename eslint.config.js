@@ -19,7 +19,12 @@ export default [
             'no-unused-vars': 'error',
             'no-console': ['warn', { 'allow': ['error', 'warn'] }],
             'prefer-const': 'error',
-            eqeqeq: 'error'
+            eqeqeq: 'error',
+            'no-var': 'error',                          // Enforce let/const over var
+            'object-shorthand': 'error',                // Require object shorthand syntax
+            'prefer-arrow-callback': 'error',           // Prefer arrow functions as callbacks
+            'no-duplicate-imports': 'error',            // Disallow duplicate module imports
+            'no-trailing-spaces': 'error'               // Disallow trailing whitespace
         }
     }
 ];
