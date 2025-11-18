@@ -68,6 +68,18 @@ describe('Rental Controller → 100% Coverage (100% REAL - FINAL)', () => {
     expect(res.status).toBe(201);
   });
 
+
+    test('POST fields errors', async () => {
+    const res = await request(app).post('/api/rentals').send({
+      car_id: carId,
+      customer_id: customerId,
+      rental_date: 'invalid-date',
+      return_date: 'invalid-date',
+      total_cost: 'invalid_cost'
+    });
+    expect(res.status).toBe(400);
+  });
+
   test('POST → 400 validación', async () => {
     const res = await request(app).post('/api/rentals').send({});
     expect(res.status).toBe(400);

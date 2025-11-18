@@ -10,10 +10,9 @@ beforeEach(() => {
 
 describe('Location API - /api/locations', () => {
 
-    // --- Pruebas para POST /api/locations (createLocation) ---
     describe('POST /api/locations', () => {
 
-        it('debería crear una nueva ubicación exitosamente (201)', async () => {
+        it('debería crear una nueva ubicación exitosamente', async () => {
             const newLocation = {
                 name: 'Sede Principal',
                 address: '123 Calle Falsa',
@@ -29,6 +28,39 @@ describe('Location API - /api/locations', () => {
             expect(res.body.name).toBe(newLocation.name);
             expect(storage.locations.length).toBe(1);
             expect(storage.locations[0].city).toBe('Springfield');
+        });
+
+        it('POST state not string', async () => {
+            const newLocation = {
+                name: 'Sede Principal',
+                address: '123 Calle Falsa',
+                city: 'Springfield',
+                state: 12345
+            };
+
+            const res = await request(app)
+                .post('/api/locations')
+                .send(newLocation);
+
+            expect(res.statusCode).toBe(400);
+        });
+
+
+
+        it('POST zip_code not string', async () => {
+            const newLocation = {
+                name: 'Sede Principal',
+                address: '123 Calle Falsa',
+                city: 'Springfield',
+                state: 'SomeState',
+                zip_code: 12345
+            };
+
+            const res = await request(app)
+                .post('/api/locations')
+                .send(newLocation);
+
+            expect(res.statusCode).toBe(400);
         });
 
         it('debería fallar si faltan campos requeridos (400)', async () => {

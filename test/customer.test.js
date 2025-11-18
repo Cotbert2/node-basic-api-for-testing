@@ -153,6 +153,16 @@ describe('Customer API', () => {
         expect(res.body.message).toBe('The name cannot contain numbers');
     });
 
+    test('POST /api/customers - phone as number', async () => {
+        const res = await request(app).post('/api/customers').send({
+            name: 'Ismael123',
+            email: 'Ismael1234@gmail.com',
+            phone_number: 1234,
+            driver_license_number: 1234
+        });
+        expect(res.statusCode).toBe(400);
+    });
+
     // test para crear customer con telefono que contiene letras
     test('POST /api/customers - fail with phone number containing letters', async () => {
         const res = await request(app).post('/api/customers').send({
@@ -176,21 +186,36 @@ describe('Customer API', () => {
         expect(res.statusCode).toBe(400);
         expect(res.body.message).toBe('Invalid email format');
     });
+    
 
-    // test para actualizar customer con email duplicado
-    test('PUT /api/customers/:id - fail with duplicate email', async () => {
-        const customer1 = await createCustomer('Juanito@gmail.com', { name: 'Juanito Campues' });
-        const customer2 = await createCustomer('Esteban@gmail.com', { name: 'Esteban Farinango' });
 
-        const res = await request(app).put(`/api/customers/${customer2.id}`).send({
+
+    test('PUT /api/customers/:id - error email must be unique', async () => {
+        const customer1 = await request(app).post('/api/customers').send({
+            name: 'Juanito',
+            email: 'test@gmail.com',
+            phone_number: '+593987654328',
+            driver_license_number: 'DL654321'
+        });
+        const customer2 = await request(app).post('/api/customers').send({
+            name: 'Esteban',
+            email: 'esteban2@gmail.com',
+            phone_number: '+593987654329',
+            driver_license_number: 'DL987654'
+        });
+
+        const res = await request(app).put(`/api/customers/${customer2.body.id}`).send({
             name: 'Esteban Farinango',
-            email: 'Juanito@gmail.com',
+            email: 'test@gmail.com',
             phone_number: '+593987654321',
             driver_license_number: 'DL123456'
         });
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('message', 'Email must be unique');
+
     });
+
+ 
 
     // test para actualizar customer con id inexistente
     test('PUT /api/customers/:id - fail with non-existent ID', async () => {

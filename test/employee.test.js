@@ -32,6 +32,37 @@ describe('Employee API - /api/employees', () => {
             expect(storage.employees[0].email).toBe(newEmployee.email);
         });
 
+
+        it('Employee Errors', async () => {
+            const newEmployee = {
+                name: 'John Doe',
+                email: 'john.doeexample.com',
+                phone_number: 1234567890
+            };
+
+            const res = await request(app)
+                .post('/api/employees')
+                .send(newEmployee);
+
+            expect(res.statusCode).toBe(400);
+
+        });
+
+        it('Employee Errors', async () => {
+            const newEmployee = {
+                name: 'John Doe',
+                email: 12,
+                phone_number: 1234567890
+            };
+
+            const res = await request(app)
+                .post('/api/employees')
+                .send(newEmployee);
+
+            expect(res.statusCode).toBe(400);
+
+        });
+
         it('debería fallar si faltan campos requeridos (400)', async () => {
             const res = await request(app)
                 .post('/api/employees')
