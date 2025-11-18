@@ -88,6 +88,7 @@ export const createRental = async (req, res) => {
 };
 
 export const updateRental = async (req, res) => {
+  
   if (!isValidUUID(req.params.id)) {
     return res.status(400).json({ message: 'Invalid ID format. Must be a valid UUID' });
   }
