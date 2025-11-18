@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node ./src/app.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --coverage --detectOpenHandles",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage --detectOpenHandles",
     "lint": "eslint ."
   },
   "repository": {
