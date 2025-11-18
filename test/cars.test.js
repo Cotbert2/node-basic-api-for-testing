@@ -489,4 +489,19 @@ describe('Car API', () => {
         expect(deleteRes2.body).toHaveProperty('message', 'Car deleted successfully');
         expect(storage.cars.length).toBe(0);
     });
+
+    // test espera fallar al actualizar un carro con id invalido
+    test('PUT /api/cars/:id - should fail to update car with invalid ID', async () => {
+        const invalidId = '123';
+        const updatedCar = {
+            make: 'Ford',
+            model: 'Fiesta',
+            year: 2022,
+            license_plate: 'UPDATE123'
+        };
+
+        const res = await request(app).put(`/api/cars/${invalidId}`).send(updatedCar);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toHaveProperty('message', 'Invalid ID format. Must be a valid UUID');
+    });
 });
