@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../src/app.js';
 import { storage } from '../src/storage/data.js';
 
-// Hook para limpiar el storage antes de cada prueba
+// hook para limpiar el storage antes de cada prueba
 beforeEach(() => {
     storage.cars = [];
     storage.locations = [];
@@ -10,14 +10,7 @@ beforeEach(() => {
 
 describe('Car API', () => {
 
-    // test que espera una lista vacia
-    test('GET /api/cars - should return empty list', async () => {
-        const res = await request(app).get('/api/cars');
-        expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual([]);
-    });
-
-    // funcion para crear un location y devolver su ID
+    // funcion helper para crear un location y devolver su id
     async function createLocation() {
         const newLocation = {
             name: 'Sangolqui rental cars',
@@ -30,6 +23,13 @@ describe('Car API', () => {
         const res = await request(app).post('/api/locations').send(newLocation);
         return res.body.id;
     }
+
+    // test que espera una lista vacia
+    test('GET /api/cars - should return empty list', async () => {
+        const res = await request(app).get('/api/cars');
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual([]);
+    });
 
     // test para crear un nuevo carro
     test('POST /api/cars - create a car', async () => {
@@ -84,7 +84,7 @@ describe('Car API', () => {
         expect(res.body.length).toBe(1);
     });
 
-    // test para obtener un carro por ID
+    // test para obtener un carro por id
     test('GET /api/cars/:id - get car by ID', async () => {
         const locationId = await createLocation();
 
@@ -104,7 +104,7 @@ describe('Car API', () => {
         expect(res.body.license_plate).toBe('TEST123');
     });
 
-    // test para actualizar un carro por ID
+    // test para actualizar un carro por id
     test('PUT /api/cars/:id - update car by ID', async () => {
         const locationId = await createLocation();
 
@@ -132,24 +132,24 @@ describe('Car API', () => {
         expect(res.body.year).toBe(2024);
     });
 
-    // test que espera fallar al obtener un carro con ID inexistente
-    test('GET /api/cars/:id - fail to get car with non-existent ID', async () => {
-        const idCar = 'a1b2c3d4-e5f6-4789-a012-345678901234'; // UUID válido pero inexistente
+    // test que espera fallar al obtener carro con id inexistente
+    test('GET /api/cars/:id - should fail to get car with non-existent ID', async () => {
+        const idCar = 'a1b2c3d4-e5f6-4789-a012-345678901234';
         const res = await request(app).get(`/api/cars/${idCar}`);
         expect(res.statusCode).toBe(404);
         expect(res.body).toHaveProperty('message', 'Car not found');
     });
 
-    // test que espera fallar al obtener un carro con ID inválido
-    test('GET /api/cars/:id - fail to get car with invalid ID', async () => {
-        const idCar = 'invalid-id-format'; // ID con formato inválido
+    // test que espera fallar al obtener carro con id invalido
+    test('GET /api/cars/:id - should fail to get car with invalid ID', async () => {
+        const idCar = 'invalid-id-format';
         const res = await request(app).get(`/api/cars/${idCar}`);
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('message', 'Invalid ID format. Must be a valid UUID');
     });
 
-    // test que espera fallar al crear un carro con license_plate duplicada
-    test('POST /api/cars - fail to create car with duplicate license_plate', async () => {
+    // test que espera fallar al crear carro con license_plate duplicada
+    test('POST /api/cars - should fail to create car with duplicate license_plate', async () => {
         const locationId = await createLocation();
 
         const car1 = {
@@ -161,7 +161,7 @@ describe('Car API', () => {
         };
         await request(app).post('/api/cars').send(car1);
 
-        // Intentar crear otro con la misma placa
+        // intentar crear otro con la misma placa
         const car2 = {
             make: 'Honda',
             model: 'Civic',
@@ -175,8 +175,8 @@ describe('Car API', () => {
         expect(res.body).toHaveProperty('message', 'License plate must be unique');
     });
 
-    // test que espera fallar al crear un carro sin campos requeridos
-    test('POST /api/cars - fail to create car without required fields', async () => {
+    // test que espera fallar al crear carro sin campos requeridos
+    test('POST /api/cars - should fail to create car without required fields', async () => {
         const invalidCar = {
             make: '',
             model: '',
@@ -189,8 +189,8 @@ describe('Car API', () => {
         expect(res.body.message).toContain('required');
     });
 
-    // test que espera fallar al crear un carro con year negativo
-    test('POST /api/cars - fail to create car with negative year', async () => {
+    // test que espera fallar al crear carro con year negativo
+    test('POST /api/cars - should fail to create car with negative year', async () => {
         const locationId = await createLocation();
 
         const invalidCar = {
@@ -206,8 +206,8 @@ describe('Car API', () => {
         expect(res.body.message).toContain('Year must be at least 1886');
     });
 
-    // test que espera fallar al crear un carro con year muy antiguo
-    test('POST /api/cars - fail to create car with year too old', async () => {
+    // test que espera fallar al crear carro con year muy antiguo
+    test('POST /api/cars - should fail to create car with year too old', async () => {
         const locationId = await createLocation();
 
         const invalidCar = {
@@ -223,8 +223,8 @@ describe('Car API', () => {
         expect(res.body.message).toContain('Year must be at least 1886');
     });
 
-    // test que espera fallar al crear un carro con year futuro lejano
-    test('POST /api/cars - fail to create car with year too far in future', async () => {
+    // test que espera fallar al crear carro con year futuro lejano
+    test('POST /api/cars - should fail to create car with year too far in future', async () => {
         const locationId = await createLocation();
 
         const invalidCar = {
@@ -240,11 +240,11 @@ describe('Car API', () => {
         expect(res.body.message).toContain('Year cannot be more than 1 year in the future');
     });
 
-    // test que espera fallar al actualizar un carro con license_plate duplicada
-    test('PUT /api/cars/:id - fail to update car with duplicate license_plate', async () => {
+    // test que espera fallar al actualizar carro con license_plate duplicada
+    test('PUT /api/cars/:id - should fail to update car with duplicate license_plate', async () => {
         const locationId = await createLocation();
 
-        // Crear primer carro
+        // crear primer carro
         const car1 = {
             make: 'Toyota',
             model: 'Corolla',
@@ -254,7 +254,7 @@ describe('Car API', () => {
         };
         await request(app).post('/api/cars').send(car1);
 
-        // Crear segundo carro
+        // crear segundo carro
         const car2 = {
             make: 'Mazda',
             model: 'CX5',
@@ -265,12 +265,12 @@ describe('Car API', () => {
         const res2 = await request(app).post('/api/cars').send(car2);
         const carId2 = res2.body.id;
 
-        // Intentar actualizar car2 con la placa de car1
+        // intentar actualizar car2 con la placa de car1
         const updatedCar = {
             make: 'Mazda',
             model: 'CX5',
             year: 2022,
-            license_plate: 'FIRST123', // placa duplicada
+            license_plate: 'FIRST123',
             rental_location_id: locationId
         };
 
@@ -279,23 +279,23 @@ describe('Car API', () => {
         expect(res.body).toHaveProperty('message', 'License plate must be unique');
     });
 
-    // test que espera fallar al eliminar un carro con ID inexistente
-    test('DELETE /api/cars/:id - fail to delete car with non-existent ID', async () => {
-        const idCar = 'a1b2c3d4-e5f6-4789-a012-345678901234'; // UUID válido pero inexistente
+    // test que espera fallar al eliminar carro con id inexistente
+    test('DELETE /api/cars/:id - should fail to delete car with non-existent ID', async () => {
+        const idCar = 'a1b2c3d4-e5f6-4789-a012-345678901234';
         const res = await request(app).delete(`/api/cars/${idCar}`);
         expect(res.statusCode).toBe(404);
         expect(res.body).toHaveProperty('message', 'Car not found');
     });
 
-    // test que espera fallar al eliminar un carro con ID inválido
-    test('DELETE /api/cars/:id - fail to delete car with invalid ID', async () => {
-        const idCar = 'not-a-uuid'; // ID con formato inválido
+    // test que espera fallar al eliminar carro con id invalido
+    test('DELETE /api/cars/:id - should fail to delete car with invalid ID', async () => {
+        const idCar = 'not-a-uuid';
         const res = await request(app).delete(`/api/cars/${idCar}`);
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('message', 'Invalid ID format. Must be a valid UUID');
     });
 
-    // test para crear un carro sin rental_location_id (opcional)
+    // test para crear carro sin rental_location_id (opcional)
     test('POST /api/cars - create car without rental_location_id', async () => {
         const newCar = {
             make: 'Tesla',
@@ -311,11 +311,11 @@ describe('Car API', () => {
         expect(res.body).not.toHaveProperty('rental_location_id');
     });
 
-    // test para listar carros cuando uno no tiene location_id
+    // test para listar carros con y sin location
     test('GET /api/cars - list cars with and without location', async () => {
         const locationId = await createLocation();
 
-        // Carro con location
+        // carro con location
         const car1 = {
             make: 'Toyota',
             model: 'Camry',
@@ -324,7 +324,7 @@ describe('Car API', () => {
             rental_location_id: locationId
         };
 
-        // Carro sin location
+        // carro sin location
         const car2 = {
             make: 'Honda',
             model: 'Accord',
@@ -342,7 +342,7 @@ describe('Car API', () => {
         expect(res.body[1]).not.toHaveProperty('rental_location_id');
     });
 
-    // test para obtener un carro con rental_location_id inexistente
+    // test para obtener carro con rental_location_id inexistente
     test('GET /api/cars/:id - get car with non-existent location', async () => {
         const fakeLocationId = 'a1b2c3d4-e5f6-4789-a012-345678901234';
         
@@ -362,8 +362,8 @@ describe('Car API', () => {
         expect(res.body.rental_location_id).toBe(fakeLocationId);
     });
 
-    // test que espera fallar al actualizar con ID inexistente
-    test('PUT /api/cars/:id - fail to update car with non-existent ID', async () => {
+    // test que espera fallar al actualizar carro con id inexistente
+    test('PUT /api/cars/:id - should fail to update car with non-existent ID', async () => {
         const idCar = 'a1b2c3d4-e5f6-4789-a012-345678901234';
         const updatedCar = {
             make: 'Toyota',
@@ -377,8 +377,8 @@ describe('Car API', () => {
         expect(res.body).toHaveProperty('message', 'Car not found');
     });
 
-    // test que espera fallar al actualizar con year inválido
-    test('PUT /api/cars/:id - fail to update car with invalid year', async () => {
+    // test que espera fallar al actualizar carro con year invalido
+    test('PUT /api/cars/:id - should fail to update car with invalid year', async () => {
         const locationId = await createLocation();
 
         const newCar = {
@@ -393,7 +393,7 @@ describe('Car API', () => {
         const carId = createRes.body.id;
 
         const updatedCar = {
-            year: 2200 // Año muy lejano en el futuro
+            year: 2200
         };
 
         const res = await request(app).put(`/api/cars/${carId}`).send(updatedCar);
@@ -402,8 +402,8 @@ describe('Car API', () => {
         expect(res.body.message).toContain('Year cannot be more than 1 year in the future');
     });
 
-    // test que espera fallar al actualizar con rental_location_id inválido
-    test('PUT /api/cars/:id - fail to update car with invalid rental_location_id', async () => {
+    // test que espera fallar al actualizar carro con rental_location_id invalido
+    test('PUT /api/cars/:id - should fail to update car with invalid rental_location_id', async () => {
         const locationId = await createLocation();
 
         const newCar = {
@@ -427,8 +427,8 @@ describe('Car API', () => {
         expect(res.body.message).toContain('Rental location ID must be a valid UUID');
     });
 
-    // test que espera fallar al actualizar con múltiples errores de validación
-    test('PUT /api/cars/:id - fail to update car with multiple validation errors', async () => {
+    // test que espera fallar al actualizar carro con multiples errores de validacion
+    test('PUT /api/cars/:id - should fail to update car with multiple validation errors', async () => {
         const locationId = await createLocation();
 
         const newCar = {
@@ -443,22 +443,21 @@ describe('Car API', () => {
         const carId = createRes.body.id;
 
         const updatedCar = {
-            year: 1500, // Muy antiguo
-            rental_location_id: 'not-a-uuid' // UUID inválido
+            year: 1500,
+            rental_location_id: 'not-a-uuid'
         };
 
         const res = await request(app).put(`/api/cars/${carId}`).send(updatedCar);
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('message');
-        // Debe contener al menos uno de los errores
         expect(res.body.message.length).toBeGreaterThan(0);
     });
 
-    // test para eliminar carros por ID
+    // test para eliminar carros por id
     test('DELETE /api/cars/:id - delete cars by ID', async () => {
         const locationId = await createLocation();
 
-        // Crear dos carros
+        // crear dos carros
         const car1 = {
             make: 'Toyota',
             model: 'Corolla',
@@ -480,7 +479,7 @@ describe('Car API', () => {
         const idCar1 = res1.body.id;
         const idCar2 = res2.body.id;
 
-        // Eliminar ambos carros
+        // eliminar ambos carros
         const deleteRes1 = await request(app).delete(`/api/cars/${idCar1}`);
         const deleteRes2 = await request(app).delete(`/api/cars/${idCar2}`);
 
